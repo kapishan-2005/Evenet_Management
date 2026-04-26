@@ -5,6 +5,7 @@ const dotenv = require('dotenv');
 const path = require('path');
 const connectDB = require('./config/db');
 const errorHandler = require('./middleware/errorMiddleware'); // BUG FIX 6: Import error middleware
+const { deleteExpiredEvents } = require('./controllers/eventController');
 
 // Load env vars
 dotenv.config();
@@ -46,4 +47,16 @@ const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
   console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+  
+  // Run auto-delete cleanup on server start
+  console.log('[Auto Delete] Running initial cleanup...');
+  deleteExpiredEvents();
+  
+  // Schedule auto-delete cleanup every 24 hours (86400000 ms)
+  setInterval(() => {
+    console.log('[Auto Delete] Running scheduled cleanup...');
+    deleteExpiredEvents();
+  }, 24 * 60 * 60 * 1000);
+  
+  console.log('[Auto Delete] Scheduler initialized - will run every 24 hours');
 });

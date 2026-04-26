@@ -14,6 +14,18 @@ const eventSchema = new mongoose.Schema(
     },
     date: {
       type: Date,
+      required: [true, 'Start date is required'],
+    },
+    endDate: {
+      type: Date,
+    },
+    autoDeleteDate: {
+      type: Date,
+      required: [true, 'Auto delete date is required'],
+    },
+    // Backward compatibility
+    autoHideDate: {
+      type: Date,
     },
     time: {
       type: String,

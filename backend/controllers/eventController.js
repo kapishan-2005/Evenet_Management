@@ -3,18 +3,99 @@ const mongoose = require('mongoose');
 const fs = require('fs');
 const path = require('path');
 
+// Auto delete expired events
+const deleteExpiredEvents = async () => {
+  try {
+    const now = new Date();
+    
+    // Find events where autoDeleteDate or autoHideDate (backward compatibility) has passed
+    const expiredEvents = await Event.find({
+      $or: [
+        { autoDeleteDate: { $lte: now } },
+        { autoHideDate: { $lte: now } }
+      ]
+    });
+
+    let deletedCount = 0;
+    let imagesDeleted = 0;
+
+    for (const event of expiredEvents) {
+      // Delete image file if exists
+      if (event.image && fs.existsSync(event.image)) {
+        try {
+          fs.unlinkSync(event.image);
+          imagesDeleted++;
+        } catch (err) {
+          console.error(`Failed to delete image for event ${event._id}:`, err.message);
+        }
+      }
+
+      // Delete event document
+      await event.deleteOne();
+      deletedCount++;
+    }
+
+    if (deletedCount > 0) {
+      console.log(`[Auto Delete] Deleted ${deletedCount} expired events and ${imagesDeleted} images at ${new Date().toISOString()}`);
+    }
+
+    return { deletedCount, imagesDeleted };
+  } catch (error) {
+    console.error('[Auto Delete] Error deleting expired events:', error);
+    return { deletedCount: 0, imagesDeleted: 0 };
+  }
+};
+
+// Export for use in server.js
+exports.deleteExpiredEvents = deleteExpiredEvents;
+
 // @desc    Create new event
 // @route   POST /api/events
 // @access  Private/Admin
 exports.createEvent = async (req, res) => {
   try {
-    const { title, description, location, date, time, category } = req.body;
+    const { title, description, location, date, endDate, autoDeleteDate, time, category } = req.body;
 
     // Validate required fields
     if (!title) {
       return res.status(400).json({
         success: false,
         message: 'Please provide a title',
+      });
+    }
+
+    if (!date) {
+      return res.status(400).json({
+        success: false,
+        message: 'Start date is required',
+      });
+    }
+
+    if (!autoDeleteDate) {
+      return res.status(400).json({
+        success: false,
+        message: 'Auto delete date is required',
+      });
+    }
+
+    // Date validation
+    const startDate = new Date(date);
+    const autoDelete = new Date(autoDeleteDate);
+    
+    if (endDate) {
+      const end = new Date(endDate);
+      if (end < startDate) {
+        return res.status(400).json({
+          success: false,
+          message: 'End date cannot be earlier than start date',
+        });
+      }
+    }
+
+    if (autoDelete < startDate) {
+      return res.status(400).json({
+        success: false,
+        message: 'Auto delete date cannot be earlier than start date',
       });
     }
 
@@ -28,6 +109,8 @@ exports.createEvent = async (req, res) => {
       description,
       location,
       date,
+      endDate,
+      autoDeleteDate,
       time,
       category,
       image,
@@ -52,6 +135,9 @@ exports.createEvent = async (req, res) => {
 // @access  Private/Admin
 exports.getAllEvents = async (req, res) => {
   try {
+    // Run cleanup before fetching events
+    await deleteExpiredEvents();
+
     const events = await Event.find({}).populate('createdBy', 'name email').sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -125,7 +211,40 @@ exports.updateEvent = async (req, res) => {
       });
     }
 
-    const { title, description, location, date, time, category, status } = req.body;
+    const { title, description, location, date, endDate, autoDeleteDate, time, category, status } = req.body;
+
+    // Validate autoDeleteDate if provided
+    if (autoDeleteDate !== undefined && !autoDeleteDate) {
+      return res.status(400).json({
+        success: false,
+        message: 'Auto delete date is required',
+      });
+    }
+
+    // Date validation
+    if (date !== undefined) {
+      const startDate = new Date(date);
+      
+      if (endDate !== undefined && endDate) {
+        const end = new Date(endDate);
+        if (end < startDate) {
+          return res.status(400).json({
+            success: false,
+            message: 'End date cannot be earlier than start date',
+          });
+        }
+      }
+
+      if (autoDeleteDate !== undefined && autoDeleteDate) {
+        const autoDelete = new Date(autoDeleteDate);
+        if (autoDelete < startDate) {
+          return res.status(400).json({
+            success: false,
+            message: 'Auto delete date cannot be earlier than start date',
+          });
+        }
+      }
+    }
 
     // Update fields
     // BUG FIX 3: Use explicit undefined checks to allow empty strings
@@ -133,6 +252,8 @@ exports.updateEvent = async (req, res) => {
     if (description !== undefined) event.description = description;
     if (location !== undefined) event.location = location;
     if (date !== undefined) event.date = date;
+    if (endDate !== undefined) event.endDate = endDate;
+    if (autoDeleteDate !== undefined) event.autoDeleteDate = autoDeleteDate;
     if (time !== undefined) event.time = time;
     if (category !== undefined) event.category = category;
     if (status !== undefined) event.status = status;

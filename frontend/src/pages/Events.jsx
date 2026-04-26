@@ -128,8 +128,14 @@ export default function Events() {
                   <p className="text-gray-500 text-xs mb-1">📍 {event.location}</p>
                 )}
                 {event.date && (
-                  <p className="text-gray-500 text-xs mb-3">
+                  <p className="text-gray-500 text-xs mb-1">
                     📅 {new Date(event.date).toLocaleDateString()}
+                    {event.endDate && ` - ${new Date(event.endDate).toLocaleDateString()}`}
+                  </p>
+                )}
+                {(event.autoDeleteDate || event.autoHideDate) && (
+                  <p className="text-red-400 text-[10px] mb-3">
+                    🗑️ Auto-delete: {new Date(event.autoDeleteDate || event.autoHideDate).toLocaleDateString()}
                   </p>
                 )}
 

@@ -60,9 +60,6 @@ export default function Sidebar() {
             <p className="text-gray-500 text-[10px]">Super Admin</p>
           </div>
         </div>
-        <button className="w-full bg-[#FFE500] text-black text-xs font-bold py-3 rounded-md uppercase tracking-wider hover:bg-yellow-300 transition-colors">
-          Join Exclusive
-        </button>
       </div>
     </aside>
   );

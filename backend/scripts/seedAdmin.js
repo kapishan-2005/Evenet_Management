@@ -9,13 +9,16 @@ const seedAdmin = async () => {
   try {
     // Connect to MongoDB
     await mongoose.connect(process.env.MONGO_URI);
-    console.log('MongoDB Connected');
+    console.log('✅ MongoDB Connected');
 
     // Check if admin already exists
     const existingAdmin = await User.findOne({ email: 'admin@example.com' });
 
     if (existingAdmin) {
-      console.log('Admin already exists');
+      console.log('ℹ️  Admin user already exists');
+      console.log('📧 Email: admin@example.com');
+      console.log('🔑 Password: password');
+      await mongoose.connection.close();
       process.exit(0);
     }
 
@@ -28,13 +31,17 @@ const seedAdmin = async () => {
       status: 'active',
     });
 
-    console.log('Admin created successfully');
-    console.log(`Email: ${admin.email}`);
-    console.log(`Password: password`);
+    console.log('✅ Admin user created successfully!');
+    console.log('📧 Email: admin@example.com');
+    console.log('🔑 Password: password');
+    console.log('');
+    console.log('You can now login to the admin dashboard with these credentials.');
     
+    await mongoose.connection.close();
     process.exit(0);
   } catch (error) {
-    console.error('Seed failed:', error.message);
+    console.error('❌ Seed failed:', error.message);
+    await mongoose.connection.close();
     process.exit(1);
   }
 };

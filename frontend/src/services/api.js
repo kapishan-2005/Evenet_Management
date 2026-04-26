@@ -34,25 +34,31 @@ export const api = {
   getMe:  ()     => axiosInstance.get('/auth/me').then(r => r.data),
 
   // Users
-  getUsers:    ()   => axiosInstance.get('/users').then(r => r.data),
-  createUser:  (body)=> axiosInstance.post('/users', body).then(r => r.data),
-  deleteUser:  (id) => axiosInstance.delete(`/users/${id}`).then(r => r.data),
-  blockUser:   (id) => axiosInstance.patch(`/users/${id}/block`).then(r => r.data),
-  unblockUser: (id) => axiosInstance.patch(`/users/${id}/unblock`).then(r => r.data),
+  getUsers:    ()     => axiosInstance.get('/users').then(r => r.data),
+  createUser:  (body) => axiosInstance.post('/users', body).then(r => r.data),
+  updateUser:  (id, body) => axiosInstance.put(`/users/${id}`, body).then(r => r.data),
+  deleteUser:  (id)   => axiosInstance.delete(`/users/${id}`).then(r => r.data),
+  blockUser:   (id)   => axiosInstance.patch(`/users/${id}/block`).then(r => r.data),
+  unblockUser: (id)   => axiosInstance.patch(`/users/${id}/unblock`).then(r => r.data),
 
   // Events
   getEvents:    ()     => axiosInstance.get('/events').then(r => r.data),
   createEvent:  (body) => axiosInstance.post('/events', body).then(r => r.data),
+  updateEvent:  (id, body) => axiosInstance.put(`/events/${id}`, body).then(r => r.data),
   deleteEvent:  (id)   => axiosInstance.delete(`/events/${id}`).then(r => r.data),
   approveEvent: (id)   => axiosInstance.patch(`/events/${id}/approve`).then(r => r.data),
   rejectEvent:  (id)   => axiosInstance.patch(`/events/${id}/reject`).then(r => r.data),
 
   // Messages
-  getMessages:   ()   => axiosInstance.get('/messages').then(r => r.data),
-  deleteMessage: (id) => axiosInstance.delete(`/messages/${id}`).then(r => r.data),
+  getMessages:      ()   => axiosInstance.get('/messages').then(r => r.data),
+  markMessageRead:  (id) => axiosInstance.patch(`/messages/${id}/read`).then(r => r.data),
+  deleteMessage:    (id) => axiosInstance.delete(`/messages/${id}`).then(r => r.data),
 
   // Reports
-  getReports: () => axiosInstance.get('/reports').then(r => r.data),
+  getDashboardSummary:  () => axiosInstance.get('/reports/summary').then(r => r.data),
+  getRecentActivity:    () => axiosInstance.get('/reports/recent-activity').then(r => r.data),
+  getEventStatusStats:  () => axiosInstance.get('/reports/event-status').then(r => r.data),
+  getMonthlyUserStats:  () => axiosInstance.get('/reports/monthly-users').then(r => r.data),
 
   // Settings
   getSettings:    ()     => axiosInstance.get('/settings').then(r => r.data),

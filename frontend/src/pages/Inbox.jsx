@@ -28,8 +28,27 @@ export default function Inbox() {
     try {
       await api.deleteMessage(id);
       setMessages(prev => prev.filter(m => m._id !== id));
+      if (active === id) setActive(null);
     } catch (err) {
       alert(err.message);
+    }
+  };
+
+  const handleMarkRead = async (id) => {
+    try {
+      await api.markMessageRead(id);
+      setMessages(prev => prev.map(m => 
+        m._id === id ? { ...m, isRead: true } : m
+      ));
+    } catch (err) {
+      console.error('Failed to mark as read:', err);
+    }
+  };
+
+  const handleMessageClick = (msg) => {
+    setActive(msg._id);
+    if (!msg.isRead) {
+      handleMarkRead(msg._id);
     }
   };
 
@@ -88,7 +107,7 @@ export default function Inbox() {
           {messages.map((msg, i) => (
             <div
               key={msg._id}
-              onClick={() => setActive(msg._id)}
+              onClick={() => handleMessageClick(msg)}
               className={`grid grid-cols-12 items-center px-4 py-3.5 rounded-xl cursor-pointer transition-all duration-200 ${
                 active === msg._id
                   ? 'bg-[#1E1E00] border border-[#FFE500]/30'
@@ -121,7 +140,7 @@ export default function Inbox() {
 
               {/* Actions */}
               <div className="col-span-1 flex justify-end items-center gap-2">
-                {!msg.read && <Badge text="New" color="yellow" />}
+                {!msg.isRead && <Badge text="New" color="yellow" />}
                 <button
                   onClick={(e) => { e.stopPropagation(); handleDelete(msg._id); }}
                   className="text-gray-600 hover:text-red-400 transition-colors"
